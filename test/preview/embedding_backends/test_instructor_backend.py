@@ -36,7 +36,7 @@ def test_embedding_function_with_kwargs(mock_instructor):
         model_name_or_path="hkunlp/instructor-base"
     )
 
-    data = ["sentence1", "sentence2"]
+    data = [["instruction", "sentence1"], ["instruction", "sentence2"]]
     embedding_backend.embed(data=data, normalize_embeddings=True)
 
     embedding_backend.model.encode.assert_called_once_with(data, normalize_embeddings=True)

@@ -21,6 +21,7 @@ class _InstructorEmbeddingBackendFactory:
 
         if embedding_backend_id in _InstructorEmbeddingBackendFactory._instances:
             return _InstructorEmbeddingBackendFactory._instances[embedding_backend_id]
+
         embedding_backend = _InstructorEmbeddingBackend(
             model_name_or_path=model_name_or_path, device=device, use_auth_token=use_auth_token
         )
@@ -39,6 +40,6 @@ class _InstructorEmbeddingBackend:
         instructor_embeddings_import.check()
         self.model = INSTRUCTOR(model_name_or_path=model_name_or_path, device=device, use_auth_token=use_auth_token)
 
-    def embed(self, data: List[str], **kwargs) -> List[List[float]]:
+    def embed(self, data: List[List[str]], **kwargs) -> List[List[float]]:
         embeddings = self.model.encode(data, **kwargs).tolist()
         return embeddings
