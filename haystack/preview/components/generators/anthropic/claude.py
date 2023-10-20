@@ -37,6 +37,7 @@ class ClaudeGenerator:
         self,
         api_key: str,
         model_name: str = "claude-instant-1",
+        max_tokens_to_sample: int = 256,
         use_async_client: bool = False,
         max_retries: Optional[int] = 3,
         timeout: Optional[int] = 600,
@@ -49,6 +50,7 @@ class ClaudeGenerator:
 
         :param api_key: The Anthropic API key.
         :param model_name: The name of the model to use.
+        :param: max_tokens_to_sample: The maximum number of tokens the output text can have. This is a required parameter, defaults to 256 tokens.
         :param use_async_client: Boolean Flag to select the Async Client, defaults to `False`. It is recommended to use Async Client for applications with many concurrent calls.
         :param max_retries: Maximum number of retries for requests, defaults to `2`.
         :param timeout: Request timeout in seconds, defaults to `600`.
@@ -60,7 +62,6 @@ class ClaudeGenerator:
         :param kwargs: Other parameters to use for the model. These parameters are all sent directly to the Anthropic
             endpoint. See Anthropic [documentation](https://docs.anthropic.com/claude/docs) for more details.
             Some of the supported parameters:
-            - `max_tokens_to_sample`: The maximum number of tokens the output text can have.
             - `temperature`: The sampling temperature to use, controls the amount of randomness injected into the response. Ranges from 0 to 1. Higher values mean the model will take more risks.
                 Try 0.9 for more creative applications, and 0
                  (argmax sampling) for ones with a well-defined answer.
@@ -80,6 +81,7 @@ class ClaudeGenerator:
         """
         self.api_key = api_key
         self.model_name = model_name
+        self.max_tokens_to_sample = max_tokens_to_sample
         self.use_async_client = use_async_client
         self.max_retries = max_retries
         self.timeout = timeout
@@ -104,6 +106,7 @@ class ClaudeGenerator:
             self,
             api_key=self.api_key,
             model_name=self.model_name,
+            max_tokens_to_sample=self.max_tokens_to_sample,
             use_async_client=self.use_async_client,
             max_retries=self.max_retries,
             timeout=self.timeout,
@@ -134,13 +137,21 @@ class ClaudeGenerator:
 
     def _generate_completion(self, client, prompt):
         generated_completion = client.completions.create(
-            model=self.model_name, prompt=prompt, stream=self.streaming_callback is not None, **self.model_parameters
+            model=self.model_name,
+            prompt=prompt,
+            max_tokens_to_sample=self.max_tokens_to_sample,
+            stream=self.streaming_callback is not None,
+            **self.model_parameters,
         )
         return generated_completion
 
     async def _generate_completion_async(self, client, prompt):
         generated_completion = await client.completions.create(
-            model=self.model_name, prompt=prompt, stream=self.streaming_callback is not None, **self.model_parameters
+            model=self.model_name,
+            prompt=prompt,
+            max_tokens_to_sample=self.max_tokens_to_sample,
+            stream=self.streaming_callback is not None,
+            **self.model_parameters,
         )
         return generated_completion
 
@@ -151,6 +162,8 @@ class ClaudeGenerator:
 
         :param prompts: The prompts to be sent to the generative model.
         """
+
+        anthropic_import.check()
 
         if self.use_async_client is True:
             client = AsyncAnthropic(api_key=self.api_key, max_retries=self.max_retries, timeout=self.timeout)
