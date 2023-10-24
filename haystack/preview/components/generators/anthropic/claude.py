@@ -177,17 +177,17 @@ class ClaudeGenerator:
 
         if self.use_async_client is True:
             client = AsyncAnthropic(api_key=self.api_key, max_retries=self.max_retries, timeout=self.timeout)
-            completion = asyncio.run(self._generate_completion_async(client, prompt))
+            generated_completion = asyncio.run(self._generate_completion_async(client, prompt))
         else:
             client = Anthropic(api_key=self.api_key, max_retries=self.max_retries, timeout=self.timeout)
-            completion = self._generate_completion(client, prompt)
+            generated_completion = self._generate_completion(client=client, prompt=prompt)
 
         replies: List[str]
         metadata: List[Dict[str, Any]]
         if self.streaming_callback:
             replies_dict: Dict[str, str] = defaultdict(str)
             metadata_dict: Dict[str, Dict[str, Any]] = defaultdict(dict)
-            for chunk in completion:
+            for chunk in generated_completion:
                 chunk = self.streaming_callback(chunk)
                 replies_dict[chunk] = chunk.completion
                 metadata_dict[chunk] = {"model": chunk.model, "stop_reason": chunk.stop_reason}
@@ -196,8 +196,8 @@ class ClaudeGenerator:
             self._check_truncated_answers(metadata)
             return {"replies": replies, "metadata": metadata}
 
-        metadata = [{"model": completion.model, "stop_reason": completion.stop_reason}]
-        replies = [completion.completion]
+        metadata = [{"model": generated_completion.model, "stop_reason": generated_completion.stop_reason}]
+        replies = [generated_completion.completion]
         self._check_truncated_answers(metadata)
         return {"replies": replies, "metadata": metadata}
 

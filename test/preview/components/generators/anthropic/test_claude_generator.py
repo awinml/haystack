@@ -234,3 +234,17 @@ class TestClaudeGenerator:
             "top_k": 5,
             "stop_sequences": ["###", "---"],
         }
+
+    @pytest.mark.unit
+    def test_run_no_async(self):
+        with patch("haystack.preview.components.generators.anthropic.claude.Anthropic") as mock_anthropic_client:
+            mock_anthropic_client.return_value.completions.create.return_value = mock_anthropic_response
+            component = ClaudeGenerator(api_key="test-api-key")
+            results = component.run(prompt="test-prompt-1")
+            assert results == {
+                "replies": ["Generated response for this prompt: test-prompt-1"],
+                "metadata": [{"model": "claude-instant-1", "finish_reason": "stop_sequence"}],
+            }
+            mock_anthropic_client.create.assert_called_once_with(
+                model="claude-instant-1", api_key="test-api-key", prompt="test-prompt-1", stream=False
+            )
