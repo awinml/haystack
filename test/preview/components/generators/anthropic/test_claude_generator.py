@@ -39,6 +39,12 @@ def mock_anthropic_stream_response(prompt: str, model: str = "claude-instant-1")
 
 class TestClaudeGenerator:
     @pytest.mark.unit
+    def test_init_fail_wo_api_key(self, monkeypatch):
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        with pytest.raises(ValueError, match="ClaudeGenerator expects an ANTHROPIC API key"):
+            ClaudeGenerator()
+
+    @pytest.mark.unit
     def test_init_default_parameters(self):
         component = ClaudeGenerator(api_key="test-api-key")
         assert component.api_key == "test-api-key"
@@ -90,7 +96,6 @@ class TestClaudeGenerator:
         assert data == {
             "type": "ClaudeGenerator",
             "init_parameters": {
-                "api_key": "test-api-key",
                 "model_name": "claude-instant-1",
                 "max_tokens_to_sample": 256,
                 "use_async_client": False,
@@ -121,7 +126,6 @@ class TestClaudeGenerator:
         assert data == {
             "type": "ClaudeGenerator",
             "init_parameters": {
-                "api_key": "test-api-key",
                 "model_name": "claude-instant-1",
                 "max_tokens_to_sample": 10,
                 "use_async_client": True,
@@ -156,7 +160,6 @@ class TestClaudeGenerator:
         assert data == {
             "type": "ClaudeGenerator",
             "init_parameters": {
-                "api_key": "test-api-key",
                 "model_name": "claude-instant-1",
                 "max_tokens_to_sample": 10,
                 "use_async_client": True,
@@ -172,11 +175,11 @@ class TestClaudeGenerator:
         }
 
     @pytest.mark.unit
-    def test_from_dict_default_parameters(self):
+    def test_from_dict_default_parameters(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-api-key")
         data = {
             "type": "ClaudeGenerator",
             "init_parameters": {
-                "api_key": "test-api-key",
                 "model_name": "claude-instant-1",
                 "max_tokens_to_sample": 256,
                 "use_async_client": False,
@@ -198,11 +201,11 @@ class TestClaudeGenerator:
         assert component.model_parameters == {}
 
     @pytest.mark.unit
-    def test_from_dict_with_custom_parameters(self):
+    def test_from_dict_with_custom_parameters(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-api-key")
         data = {
             "type": "ClaudeGenerator",
             "init_parameters": {
-                "api_key": "test-api-key",
                 "model_name": "claude-instant-1",
                 "max_tokens_to_sample": 10,
                 "use_async_client": True,

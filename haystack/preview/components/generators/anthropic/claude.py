@@ -2,6 +2,7 @@ import asyncio
 import logging
 from collections import defaultdict
 import sys
+import os
 from typing import Any, Callable, Dict, List, Optional
 
 from haystack.lazy_imports import LazyImport
@@ -35,7 +36,7 @@ class ClaudeGenerator:
 
     def __init__(
         self,
-        api_key: str,
+        api_key: Optional[str] = None,
         model_name: str = "claude-instant-1",
         max_tokens_to_sample: int = 256,
         use_async_client: bool = False,
@@ -48,7 +49,8 @@ class ClaudeGenerator:
         """
         Creates an instance of ClaudeGenerator for Anthropic's Claude models.
 
-        :param api_key: The Anthropic API key.
+        :param api_key: The Anthropic API key. It can be explicitly provided or automatically read from the
+            environment variable ANTHROPIC_API_KEY (recommended).
         :param model_name: The name of the model to use.
         :param: max_tokens_to_sample: The maximum number of tokens the output text can have. This is a required parameter, defaults to 256 tokens.
         :param use_async_client: Boolean Flag to select the Async Client, defaults to `False`. It is recommended to use Async Client for applications with many concurrent calls.
@@ -79,6 +81,15 @@ class ClaudeGenerator:
                 and may include additional built-in stop sequences
                  in the future.
         """
+        if api_key is None:
+            try:
+                api_key = os.environ["ANTHROPIC_API_KEY"]
+            except KeyError as e:
+                raise ValueError(
+                    "ClaudeGenerator expects an ANTHROPIC API key. "
+                    "Set the ANTHROPIC_API_KEY environment variable (recommended) or pass it explicitly."
+                ) from e
+
         self.api_key = api_key
         self.model_name = model_name
         self.max_tokens_to_sample = max_tokens_to_sample
@@ -104,7 +115,6 @@ class ClaudeGenerator:
 
         return default_to_dict(
             self,
-            api_key=self.api_key,
             model_name=self.model_name,
             max_tokens_to_sample=self.max_tokens_to_sample,
             use_async_client=self.use_async_client,
