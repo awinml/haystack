@@ -13,6 +13,7 @@ with LazyImport(message="Run 'pip install \"sentence-transformers>=2.2.0\"'") as
     from sentence_transformers import SentenceTransformer
 
 
+@component
 class DiversityRanker:
     """
     Implements a document ranking algorithm that orders documents in such a way as to maximize the overall diversity
