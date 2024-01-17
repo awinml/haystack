@@ -32,22 +32,23 @@ class LocalWhisperTranscriber:
 
     def __init__(
         self,
-        model: WhisperLocalModel = "large",
+        model_name_or_path: WhisperLocalModel = "large",
         device: Optional[str] = None,
         whisper_params: Optional[Dict[str, Any]] = None,
     ):
         """
-        :param model: Name of the model to use. Set it to one of the following values:
-        :type model: Literal["tiny", "small", "medium", "large", "large-v2"]
+        :param model_name_or_path: Name of the model to use. Set it to one of the following values:
+        :type model_name_or_path: Literal["tiny", "small", "medium", "large", "large-v2"]
         :param device: Name of the torch device to use for inference. If None, CPU is used.
         :type device: Optional[str]
         """
         whisper_import.check()
-        if model not in get_args(WhisperLocalModel):
+        if model_name_or_path not in get_args(WhisperLocalModel):
             raise ValueError(
-                f"Model name '{model}' not recognized. Choose one among: " f"{', '.join(get_args(WhisperLocalModel))}."
+                f"Model name '{model_name_or_path}' not recognized. Choose one among: "
+                f"{', '.join(get_args(WhisperLocalModel))}."
             )
-        self.model = model
+        self.model_name = model_name_or_path
         self.whisper_params = whisper_params or {}
         self.device = torch.device(device) if device else torch.device("cpu")
         self._model = None
@@ -57,13 +58,15 @@ class LocalWhisperTranscriber:
         Loads the model.
         """
         if not self._model:
-            self._model = whisper.load_model(self.model, device=self.device)
+            self._model = whisper.load_model(self.model_name, device=self.device)
 
     def to_dict(self) -> Dict[str, Any]:
         """
         Serialize this component to a dictionary.
         """
-        return default_to_dict(self, model=self.model, device=str(self.device), whisper_params=self.whisper_params)
+        return default_to_dict(
+            self, model_name_or_path=self.model_name, device=str(self.device), whisper_params=self.whisper_params
+        )
 
     @component.output_types(documents=List[Document])
     def run(self, sources: List[Union[str, Path, ByteStream]], whisper_params: Optional[Dict[str, Any]] = None):

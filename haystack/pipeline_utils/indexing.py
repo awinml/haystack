@@ -1,3 +1,4 @@
+import inspect
 import os
 import re
 from pathlib import Path
@@ -10,10 +11,9 @@ from haystack.components.converters import TextFileToDocument
 from haystack.components.embedders import SentenceTransformersDocumentEmbedder, OpenAIDocumentEmbedder
 from haystack.components.fetchers import LinkContentFetcher
 from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter
-from haystack.components.routers import FileTypeRouter
-from haystack.components.joiners import DocumentJoiner
+from haystack.components.routers import FileTypeRouter, DocumentJoiner
 from haystack.components.writers import DocumentWriter
-from haystack.document_stores.types import DocumentStore
+from haystack.document_stores.protocol import DocumentStore
 
 
 def download_files(sources: List[str]) -> List[str]:
@@ -196,10 +196,22 @@ class _IndexingPipeline:
             )
         return self._create_embedder(embedder_class, embedding_model, init_kwargs)
 
-    def _create_embedder(self, embedder_class: Type, model: str, init_kwargs: Optional[Dict[str, Any]] = None) -> Any:
-        # Note: here we assume the embedder accepts a parameter called `model` that takes the model's name or path.
-        # See https://github.com/deepset-ai/haystack/issues/6534
-        kwargs = {**(init_kwargs or {}), "model": model}
+    def _create_embedder(
+        self, embedder_class: Type, model_name: str, init_kwargs: Optional[Dict[str, Any]] = None
+    ) -> Any:
+        init_signature = inspect.signature(embedder_class.__init__)
+
+        kwargs = {**(init_kwargs or {})}
+
+        # Determine the correct parameter name and set it
+        if "model_name_or_path" in init_signature.parameters:
+            kwargs["model_name_or_path"] = model_name
+        elif "model_name" in init_signature.parameters:
+            kwargs["model_name"] = model_name
+        else:
+            raise ValueError(f"Could not find a parameter for the model name in the embedder class {embedder_class}")
+
+        # Instantiate the class
         return embedder_class(**kwargs)
 
     def _list_files_recursively(self, path: Union[str, Path]) -> List[str]:

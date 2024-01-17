@@ -76,9 +76,7 @@ def _prepare_for_drawing(graph: networkx.MultiDiGraph, style_map: Dict[str, str]
 
     # Label the edges
     for inp, outp, key, data in graph.edges(keys=True, data=True):
-        data[
-            "label"
-        ] = f"{data['from_socket'].name} -> {data['to_socket'].name}{' (opt.)' if not data['mandatory'] else ''}"
+        data["label"] = f"{data['from_socket'].name} -> {data['to_socket'].name}"
         graph.add_edge(inp, outp, key=key, **data)
 
     # Draw the inputs

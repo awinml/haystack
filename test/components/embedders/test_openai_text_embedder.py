@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from openai import OpenAIError
 
@@ -12,17 +10,21 @@ class TestOpenAITextEmbedder:
         embedder = OpenAITextEmbedder()
 
         assert embedder.client.api_key == "fake-api-key"
-        assert embedder.model == "text-embedding-ada-002"
+        assert embedder.model_name == "text-embedding-ada-002"
         assert embedder.organization is None
         assert embedder.prefix == ""
         assert embedder.suffix == ""
 
     def test_init_with_parameters(self):
         embedder = OpenAITextEmbedder(
-            api_key="fake-api-key", model="model", organization="fake-organization", prefix="prefix", suffix="suffix"
+            api_key="fake-api-key",
+            model_name="model",
+            organization="fake-organization",
+            prefix="prefix",
+            suffix="suffix",
         )
         assert embedder.client.api_key == "fake-api-key"
-        assert embedder.model == "model"
+        assert embedder.model_name == "model"
         assert embedder.organization == "fake-organization"
         assert embedder.prefix == "prefix"
         assert embedder.suffix == "suffix"
@@ -37,18 +39,27 @@ class TestOpenAITextEmbedder:
         data = component.to_dict()
         assert data == {
             "type": "haystack.components.embedders.openai_text_embedder.OpenAITextEmbedder",
-            "init_parameters": {"model": "text-embedding-ada-002", "organization": None, "prefix": "", "suffix": ""},
+            "init_parameters": {
+                "model_name": "text-embedding-ada-002",
+                "organization": None,
+                "prefix": "",
+                "suffix": "",
+            },
         }
 
     def test_to_dict_with_custom_init_parameters(self):
         component = OpenAITextEmbedder(
-            api_key="fake-api-key", model="model", organization="fake-organization", prefix="prefix", suffix="suffix"
+            api_key="fake-api-key",
+            model_name="model",
+            organization="fake-organization",
+            prefix="prefix",
+            suffix="suffix",
         )
         data = component.to_dict()
         assert data == {
             "type": "haystack.components.embedders.openai_text_embedder.OpenAITextEmbedder",
             "init_parameters": {
-                "model": "model",
+                "model_name": "model",
                 "organization": "fake-organization",
                 "prefix": "prefix",
                 "suffix": "suffix",
@@ -63,17 +74,13 @@ class TestOpenAITextEmbedder:
         with pytest.raises(TypeError, match="OpenAITextEmbedder expects a string as an input"):
             embedder.run(text=list_integers_input)
 
-    @pytest.mark.skipif(os.environ.get("OPENAI_API_KEY", "") == "", reason="OPENAI_API_KEY is not set")
     @pytest.mark.integration
     def test_run(self):
-        model = "text-embedding-ada-002"
+        model = "text-similarity-ada-001"
 
-        embedder = OpenAITextEmbedder(model=model, prefix="prefix ", suffix=" suffix")
+        embedder = OpenAITextEmbedder(model_name=model, prefix="prefix ", suffix=" suffix")
         result = embedder.run(text="The food was delicious")
 
-        assert len(result["embedding"]) == 1536
+        assert len(result["embedding"]) == 1024
         assert all(isinstance(x, float) for x in result["embedding"])
-        assert result["meta"] == {
-            "model": "text-embedding-ada-002-v2",
-            "usage": {"prompt_tokens": 6, "total_tokens": 6},
-        }
+        assert result["meta"] == {"model": "text-similarity-ada:001", "usage": {"prompt_tokens": 6, "total_tokens": 6}}
