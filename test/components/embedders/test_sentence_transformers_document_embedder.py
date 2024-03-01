@@ -20,6 +20,7 @@ class TestSentenceTransformersDocumentEmbedder:
         assert embedder.normalize_embeddings is False
         assert embedder.meta_fields_to_embed == []
         assert embedder.embedding_separator == "\n"
+        assert embedder.trust_remote_code is False
 
     def test_init_with_parameters(self):
         embedder = SentenceTransformersDocumentEmbedder(
@@ -33,6 +34,7 @@ class TestSentenceTransformersDocumentEmbedder:
             normalize_embeddings=True,
             meta_fields_to_embed=["test_field"],
             embedding_separator=" | ",
+            trust_remote_code=True,
         )
         assert embedder.model == "model"
         assert embedder.device == ComponentDevice.from_str("cuda:0")
@@ -44,6 +46,7 @@ class TestSentenceTransformersDocumentEmbedder:
         assert embedder.normalize_embeddings is True
         assert embedder.meta_fields_to_embed == ["test_field"]
         assert embedder.embedding_separator == " | "
+        assert embedder.trust_remote_code is True
 
     def test_to_dict(self):
         component = SentenceTransformersDocumentEmbedder(model="model", device=ComponentDevice.from_str("cpu"))
@@ -61,6 +64,7 @@ class TestSentenceTransformersDocumentEmbedder:
                 "normalize_embeddings": False,
                 "embedding_separator": "\n",
                 "meta_fields_to_embed": [],
+                "trust_remote_code": False,
             },
         }
 
@@ -76,6 +80,7 @@ class TestSentenceTransformersDocumentEmbedder:
             normalize_embeddings=True,
             meta_fields_to_embed=["meta_field"],
             embedding_separator=" - ",
+            trust_remote_code=True,
         )
         data = component.to_dict()
 
@@ -92,6 +97,7 @@ class TestSentenceTransformersDocumentEmbedder:
                 "normalize_embeddings": True,
                 "embedding_separator": " - ",
                 "meta_fields_to_embed": ["meta_field"],
+                "trust_remote_code": True,
             },
         }
 
@@ -107,6 +113,7 @@ class TestSentenceTransformersDocumentEmbedder:
             "normalize_embeddings": True,
             "embedding_separator": " - ",
             "meta_fields_to_embed": ["meta_field"],
+            "trust_remote_code": True,
         }
         component = SentenceTransformersDocumentEmbedder.from_dict(
             {
@@ -124,6 +131,7 @@ class TestSentenceTransformersDocumentEmbedder:
         assert component.normalize_embeddings is True
         assert component.embedding_separator == " - "
         assert component.meta_fields_to_embed == ["meta_field"]
+        assert component.trust_remote_code is True
 
     @patch(
         "haystack.components.embedders.sentence_transformers_document_embedder._SentenceTransformersEmbeddingBackendFactory"
@@ -134,7 +142,9 @@ class TestSentenceTransformersDocumentEmbedder:
         )
         mocked_factory.get_embedding_backend.assert_not_called()
         embedder.warm_up()
-        mocked_factory.get_embedding_backend.assert_called_once_with(model="model", device="cpu", auth_token=None)
+        mocked_factory.get_embedding_backend.assert_called_once_with(
+            model="model", device="cpu", auth_token=None, trust_remote_code=False
+        )
 
     @patch(
         "haystack.components.embedders.sentence_transformers_document_embedder._SentenceTransformersEmbeddingBackendFactory"
